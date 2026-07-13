@@ -8,9 +8,4 @@ wheels/
 
 # Virtual environments
 .venv
-
-# Datasets
-data/
-*.nii
-*.nii.gz
-*.tgz
+docs/anshulbadhani.work.md
