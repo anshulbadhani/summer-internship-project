@@ -1,6 +1,6 @@
 import numpy as np
 
-from src.neighbourhood import (
+from src.neighborhood import (
     compute_center_map,
     compute_neighbor_map,
     flatten_pixel_features,

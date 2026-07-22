@@ -7,7 +7,7 @@ from src.ghm_wavelet import ghm_decompose_2d
 from src.quadratic_dist import quadratic_distance, fit_quadratic_coeffs
 from src.outlier import compute_lvc, compute_phi
 
-from src.init_centers import init_centers_cnn_pso
+from src.init_centers import init_centers_cnn_de
 
 
 def issarkfcm(image, c, m=2.0, max_iter=100, eps=1e-5, alpha=0.5):
@@ -18,11 +18,11 @@ def issarkfcm(image, c, m=2.0, max_iter=100, eps=1e-5, alpha=0.5):
     N = H * W
     
     # =========================================================================
-    # [1/4] Initializing Cluster Centers via CNN + PSO
+    # [1/4] Initializing Cluster Centers via CNN + DE
     # =========================================================================
-    print("[1/4] Initializing Cluster Centers via CNN + PSO...")
-    # Person C's logic outputs initial high-quality cluster centers
-    V_init = init_centers_cnn_pso(image, c)
+    print("[1/4] Initializing Cluster Centers via CNN + DE...")
+    # Logic outputs initial high-quality cluster centers via Differential Evolution
+    V_init = init_centers_cnn_de(image, c)
     
     # =========================================================================
     # [2/4] Running GHM Multiwavelet & Spatial Extraction
