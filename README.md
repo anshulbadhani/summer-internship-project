@@ -13,7 +13,7 @@ issarkfcm/
 │   ├── ghm_wavelet.py     # custom multiwavelet decomposition
 │   ├── quadratic_dist.py  # quadratic polynomial distance
 │   ├── cnn.py             # LeNet-style CNN (Fig. 5)
-│   ├── pso.py             # PSO loop / pyswarms wrapper
+│   ├── de.py              # Differential Evolution (DE) loop
 │   ├── issarkfcm.py       # final combined algorithm
 │   └── metrics.py         # Vpc, Vpe, Vxb
 ├── experiments/           # scripts reproducing Tables 2-3, Figs 18-20

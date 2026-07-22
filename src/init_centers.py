@@ -4,7 +4,7 @@ import torch.nn.functional as F
 from numpy.lib.stride_tricks import sliding_window_view
 
 from src.cnn import PatchCNN
-from src.pso import pso_optimize
+from src.de import de_optimize
 
 def run_simple_fcm(intensities, c, m=2.0, max_iter=20, eps=1e-5):
     """
@@ -103,7 +103,7 @@ def extract_all_patches(image, patch_size):
     else:
         raise ValueError(f"Unsupported image dimensions: {image.ndim}. Must be 2D or 3D.")
 
-def init_centers_cnn_pso(
+def init_centers_cnn_de(
     image,
     c,
     patch_size=17,
@@ -113,15 +113,15 @@ def init_centers_cnn_pso(
     verbose=True
 ) -> np.ndarray:
     """
-    Initializes cluster centers using a combined PSO-CNN framework.
+    Initializes cluster centers using a combined DE-CNN framework.
     
     Workflow:
     1. Pre-cluster the pixel intensities using standard Fuzzy C-Means to get pseudo-labels.
     2. Extract local n x n patches for each pixel/voxel.
     3. Normalize intensities (Z-score normalization).
-    4. Randomly sample a subset of patches for the PSO loop to accelerate convergence.
+    4. Randomly sample a subset of patches for the DE loop to accelerate convergence.
     5. Define a fitness function: Cross-Entropy loss between the CNN predictions and pre-clustering labels.
-    6. Optimize the CNN weights/biases using the Particle Swarm Optimization loop.
+    6. Optimize the CNN weights/biases using the Differential Evolution loop.
     7. Load the best parameters back into the CNN.
     8. Compute the cluster probabilities for all pixels in the image using the optimized CNN.
     9. Compute the initial cluster centers V0 as a membership-weighted average of original intensities.
@@ -131,7 +131,7 @@ def init_centers_cnn_pso(
     - image: 2D or 3D numpy array representing the brain MR image.
     - c: int, number of target clusters (classes).
     - patch_size: int, size of local patch (default: 17).
-    - num_samples: int, number of patches to sample for the PSO loop (default: 1000).
+    - num_samples: int, number of patches to sample for the DE loop (default: 1000).
     - m: float, fuzziness coefficient (default: 2.0).
     - latent_dim: int, compact latent representation size in PatchCNN (default: 84).
     - verbose: bool, print progress messages.
@@ -162,7 +162,7 @@ def init_centers_cnn_pso(
         device = torch.device("cpu")
         
     if verbose:
-        print(f"Initializing cluster centers using PSO-CNN on device: {device}...")
+        print(f"Initializing cluster centers using DE-CNN on device: {device}...")
         print("Step 1: Running pre-clustering (FCM)...")
         
     # Step 1: Run pre-clustering to get pseudo-ground-truth labels
@@ -178,10 +178,10 @@ def init_centers_cnn_pso(
         print(f"Step 2: Extracting local {patch_size}x{patch_size} patches...")
     patches = extract_all_patches(norm_image, patch_size)
     
-    # Step 4: Sample a subset of patches to accelerate the PSO loop
+    # Step 4: Sample a subset of patches to accelerate the DE loop
     if num_samples is not None and num_samples < N:
         if verbose:
-            print(f"Step 3: Sampling {num_samples} patches for the PSO loop...")
+            print(f"Step 3: Sampling {num_samples} patches for the DE loop...")
         np.random.seed(42)
         indices = np.random.choice(N, size=num_samples, replace=False)
         sample_patches = patches[indices]
@@ -218,16 +218,16 @@ def init_centers_cnn_pso(
             loss = -torch.mean(torch.sum(one_hot_t * torch.log(probs + 1e-15), dim=1))
             return loss.item()
             
-    # Step 7: Run PSO optimization
+    # Step 7: Run DE optimization
     if verbose:
-        print(f"Step 4: Running Particle Swarm Optimization (optimizing {D} parameters)...")
-    best_weights = pso_optimize(
+        print(f"Step 4: Running Differential Evolution (optimizing {D} parameters)...")
+    best_weights = de_optimize(
         fitness_fn,
         bounds,
-        n_particles=12,
-        c1=1.70,
-        c2=1.70,
-        nbmaxiter=300,
+        pop_size=12,
+        F=0.8,
+        CR=0.7,
+        maxiter=300,
         nerp=10,
         eps=1e-6,
         verbose=verbose
@@ -268,3 +268,7 @@ def init_centers_cnn_pso(
         
     # Return shape (c, 1) to match (c, feature_dim) where feature_dim=1
     return V0.reshape(c, 1)
+
+# Alias for backward compatibility
+init_centers_cnn_pso = init_centers_cnn_de
+
